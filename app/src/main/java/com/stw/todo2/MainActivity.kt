@@ -1,13 +1,24 @@
 package com.stw.todo2
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
+import android.preference.PreferenceManager.OnActivityResultListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.stw.todo2.databinding.ActivityMainBinding
+import java.util.Locale
 
 
+@Suppress("DEPRECATION")
 class MainActivity : AppCompatActivity() {
 
     lateinit var adapter : TodoAdapter;
@@ -72,6 +83,37 @@ class MainActivity : AppCompatActivity() {
             btnBrisi.setOnClickListener {
                 adapter.Brisi()
             }
+            btnPricaj.setOnClickListener{
+                getVoiceToText();
+
+            }
+        }
+
+    }
+
+    val result = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
+            result->if(result.resultCode == Activity.RESULT_OK){
+        val results = result.data?.getStringArrayListExtra(
+            RecognizerIntent.EXTRA_RESULTS
+        ) as ArrayList<String>
+
+        binding.etZadatak.setText(results[0])
+
+    }
+    }
+
+    private fun getVoiceToText(){
+
+        if(!SpeechRecognizer.isRecognitionAvailable(this)){
+            Toast.makeText(this,"Nema dozvole",Toast.LENGTH_LONG).show();
+        } else{
+            val i = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            //Locale.English() ili odredjeni jezik, get default uzima od sistema
+            i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+            i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Kazi...");
+
+            result.launch(i)
         }
     }
 }
